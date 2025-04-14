@@ -1,0 +1,66 @@
+import math
+def little_algorithm(cost_matrix):
+    n = len(cost_matrix)
+    def reduce_matrix(matrix):
+        reduction_cost = 0
+        for row in matrix:
+            min_val = min(row)
+            if min_val != math.inf and min_val != 0:
+                reduction_cost += min_val
+                row[:] = [x - min_val if x != math.inf else x for x in row]
+        for j in range(len(matrix)):
+            min_val = min(matrix[i][j] for i in range(len(matrix)))
+            if min_val != math.inf and min_val != 0:
+                reduction_cost += min_val
+                for i in range(len(matrix)):
+                    if matrix[i][j] != math.inf:
+                        matrix[i][j] -= min_val
+        return matrix, reduction_cost
+    def calculate_penalties(matrix):
+        penalties = []
+        for i in range(len(matrix)):
+            for j in range(len(matrix)):
+                if matrix[i][j] == 0:
+                    min_row = min(x for k, x in enumerate(matrix[i]) if k != j and x != math.inf)
+                    min_col = min(matrix[k][j] for k in range(len(matrix)) if k != i and matrix[k][j] != math.inf)
+                    penalty = min_row + min_col
+                    penalties.append((i, j, penalty))
+        return penalties
+    path = []
+    total_cost = 0
+    current_matrix = [row[:] for row in cost_matrix]
+    while len(path) < n - 1:
+        current_matrix, reduction_cost = reduce_matrix(current_matrix)
+        total_cost += reduction_cost
+        penalties = calculate_penalties(current_matrix)
+        if not penalties:
+            break
+        max_penalty = max(penalties, key=lambda x: x[2])
+        i, j, _ = max_penalty
+        path.append((i, j))
+        current_matrix[j][i] = math.inf
+        for row in current_matrix:
+            row[j] = math.inf
+        current_matrix[i] = [math.inf] * n
+    if len(path) == n - 1:
+        last_i = path[-1][1]
+        last_j = next(j for j in range(n) if j not in [x[0] for x in path])
+        path.append((last_i, last_j))
+        total_cost += cost_matrix[last_i][last_j]
+    return path, total_cost
+def input_matrix():
+    print("Введите количество вершин графа")
+    n = int(input())
+    print("Введите матрицу стоимостей")
+    matrix = []
+    for _ in range(n):
+        row = list(map(lambda x: math.inf if x == "inf" else int(x), input().split()))
+        matrix.append(row)
+    return matrix
+if __name__ == "__main__":
+    cost_matrix = input_matrix()
+    path, total_cost = little_algorithm(cost_matrix)
+    
+    print("\nКратчайший цикл:")
+    print(" -> ".join(str(x[0] + 1) for x in path) + f" -> {path[-1][1] + 1}")
+    print(f"Общая стоимость: {total_cost}")
