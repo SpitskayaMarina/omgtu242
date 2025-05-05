@@ -1,0 +1,44 @@
+using System;
+using System.IO;
+using System.Text.RegularExpressions;
+class Program
+{
+    static void Main()
+    {
+        Console.WriteLine("enter string. to exit enter exit:");
+        string input;
+        string outputPath = "output.txt";
+        using (StreamWriter writer = new StreamWriter(outputPath))
+        {
+            while (true)
+            {
+                input = Console.ReadLine();
+                if (input.Equals("exit", StringComparison.OrdinalIgnoreCase))
+                {
+                    break;
+                }
+                if (ContainsEvenNumber(input))
+                {
+                    writer.WriteLine(input);
+                }
+            }
+        }
+        Console.WriteLine($"Lines with even numbers are written to the file: {outputPath}");
+    }
+    static bool ContainsEvenNumber(string input)
+    {
+        Regex regex = new Regex(@"(\d+)");
+        MatchCollection matches = regex.Matches(input);
+        foreach (Match match in matches)
+        {
+            if (int.TryParse(match.Value, out int number))
+            {
+                if (number % 2 == 0)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+}
