@@ -1,0 +1,114 @@
+using System;
+
+public class GenericArray<T>
+{
+    private T[] array;
+    private int count;
+
+    public GenericArray(int size)
+    {
+        array = new T[size];
+        count = 0;
+    }
+
+    public void Add(T item)
+    {
+        if (count < array.Length)
+        {
+            array[count] = item;
+            count++;
+        }
+        else
+        {
+            Console.WriteLine("array is full");
+        }
+    }
+
+    public void Remove(int index)
+    {
+        if (index < 0 || index >= count)
+        {
+            Console.WriteLine("index out of range");
+            return;
+        }
+        for (int i = index; i < count - 1; i++)
+        {
+            array[i] = array[i + 1];
+        }
+        array[count - 1] = default;
+        count--;
+    }
+    public T Get(int index)
+    {
+        if (index < 0 || index >= count)
+        {
+            throw new IndexOutOfRangeException("index out of range");
+        }
+        return array[index];
+    }
+    public void Print()
+    {
+        for (int i = 0; i < count; i++)
+        {
+            Console.WriteLine(array[i]);
+        }
+    }
+}
+class Program
+{
+    static void Main()
+    {
+        Console.WriteLine("enter array size");
+        int size = int.Parse(Console.ReadLine());
+        GenericArray<string> myArray = new GenericArray<string>(size);
+        while (true)
+        {
+            Console.WriteLine("Select an action:");
+            Console.WriteLine("1. add element");
+            Console.WriteLine("2. delete element");
+            Console.WriteLine("3. take element with index");
+            Console.WriteLine("4. output all elements");
+            Console.WriteLine("5. exit");
+            int choice = int.Parse(Console.ReadLine());
+            if (choice == 1)
+            {
+                Console.WriteLine("choose element to add");
+                string element = Console.ReadLine();
+                myArray.Add(element);
+            }
+            else if (choice == 2)
+            {
+                Console.WriteLine("enter index to delete");
+                int index = int.Parse(Console.ReadLine());
+                myArray.Remove(index);
+            }
+            else if (choice == 3)
+            {
+                Console.WriteLine("enter index to get an element");
+                int index = int.Parse(Console.ReadLine());
+                try
+                {
+                    string element = myArray.Get(index);
+                    Console.WriteLine($"element with index {index}: {element}");
+                }
+                catch (IndexOutOfRangeException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+            }
+            else if (choice == 4)
+            {
+                Console.WriteLine("all elements in array");
+                myArray.Print();
+            }
+            else if (choice == 5)
+            {
+                break;
+            }
+            else
+            {
+                Console.WriteLine("error");
+            }
+        }
+    }
+}
