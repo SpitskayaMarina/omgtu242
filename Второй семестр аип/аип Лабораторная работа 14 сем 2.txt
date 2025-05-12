@@ -1,0 +1,137 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+class Program
+{
+    class Computer
+    {
+        public string Brand { get; set; }
+        public int Year { get; set; }
+        public string OS { get; set; }
+    }
+    class User
+    {
+        public string FullName { get; set; }
+        public int BirthYear { get; set; }
+        public bool HasComputer { get; set; }
+        public Computer Computer { get; set; }
+    }
+    static List<User> users = new List<User>();
+    static void Main(string[] args)
+    {
+        Console.WriteLine("enter user data");
+        while (true)
+        {
+            Console.WriteLine("\nnew user:");
+            Console.Write("fio: ");
+            string name = Console.ReadLine();
+            if (name.ToLower() == "exit") break;
+            Console.Write("born year: ");
+            int birthYear = int.Parse(Console.ReadLine());
+            Console.Write("have you got computer: ");
+            bool hasComputer = Console.ReadLine().ToLower() == "yes";
+            Computer computer = null;
+            if (hasComputer)
+            {
+                computer = new Computer();
+                Console.Write("computer mark: ");
+                computer.Brand = Console.ReadLine();
+                Console.Write("computer born year: ");
+                computer.Year = int.Parse(Console.ReadLine());
+                Console.Write("os: ");
+                computer.OS = Console.ReadLine();
+            }
+            users.Add(new User
+            {
+                FullName = name,
+                BirthYear = birthYear,
+                HasComputer = hasComputer,
+                Computer = computer
+            });
+        }
+        while (true)
+        {
+            Console.WriteLine("\nmenu:");
+            Console.WriteLine("1. users without computer");
+            Console.WriteLine("2. os group");
+            Console.WriteLine("3. computer mark group");
+            Console.WriteLine("4. statistic having computer");
+            Console.WriteLine("5. exit");
+            Console.Write("choose action: ");
+            int choice = int.Parse(Console.ReadLine());
+            Console.WriteLine();
+            switch (choice)
+            {
+                case 1:
+                    ShowUsersWithoutComputer();
+                    break;
+                case 2:
+                    GroupByOS();
+                    break;
+                case 3:
+                    GroupByBrand();
+                    break;
+                case 4:
+                    ShowComputerStatistics();
+                    break;
+                case 5:
+                    return;
+                default:
+                    Console.WriteLine("error");
+                    break;
+            }
+        }
+    }
+    static void ShowUsersWithoutComputer()
+    {
+        var usersWithoutPC = users.Where(u => !u.HasComputer);
+        Console.WriteLine("users without computer:");
+        foreach (var user in usersWithoutPC)
+        {
+            Console.WriteLine($"{user.FullName}, {user.BirthYear} г.р.");
+        }
+    }
+    static void GroupByOS()
+    {
+        var grouped = users
+            .Where(u => u.HasComputer)
+            .GroupBy(u => u.Computer.OS);
+        Console.WriteLine("os group:");
+        foreach (var group in grouped)
+        {
+            Console.WriteLine($"\nos: {group.Key}");
+            foreach (var user in group)
+            {
+                Console.WriteLine($"{user.FullName}, {user.Computer.Brand} ({user.Computer.Year})");
+            }
+        }
+    }
+    static void GroupByBrand()
+    {
+        var grouped = users
+            .Where(u => u.HasComputer)
+            .GroupBy(u => u.Computer.Brand);
+        Console.WriteLine("computer mark groupe:");
+        foreach (var group in grouped)
+        {
+            Console.WriteLine($"\ncomputer mark: {group.Key}");
+            foreach (var user in group)
+            {
+                Console.WriteLine($"{user.FullName}, {user.Computer.OS} ({user.Computer.Year})");
+            }
+        }
+    }
+    static void ShowComputerStatistics()
+    {
+        int withComputer = users.Count(u => u.HasComputer);
+        int withoutComputer = users.Count - withComputer;
+        Console.WriteLine($"usres with computer: {withComputer}");
+        Console.WriteLine($"users without computer: {withoutComputer}");
+        if (withComputer > withoutComputer)
+            Console.WriteLine("more users with computer");
+        else if (withComputer < withoutComputer)
+            Console.WriteLine("more users without computer");
+        else
+            Console.WriteLine("equale");
+    }
+}
