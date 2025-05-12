@@ -1,0 +1,187 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+class Program
+{
+    public class Product
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public decimal PurchasePrice { get; set; }
+        public decimal SalePrice { get; set; }
+        public Product(int id, string name, decimal purchasePrice, decimal salePrice)
+        {
+            Id = id;
+            Name = name;
+            PurchasePrice = purchasePrice;
+            SalePrice = salePrice;
+        }
+    }
+    public class Supplier
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public Supplier(int id, string name)
+        {
+            Id = id;
+            Name = name;
+        }
+    }
+    public class StockMovement
+    {
+        public DateTime Date { get; set; }
+        public Product Product { get; set; }
+        public Supplier Supplier { get; set; }
+        public int Quantity { get; set; }
+        public bool IsIncoming { get; set; }
+        public StockMovement(DateTime date, Product product, Supplier supplier, int quantity, bool isIncoming)
+        {
+            Date = date;
+            Product = product;
+            Supplier = supplier;
+            Quantity = quantity;
+            IsIncoming = isIncoming;
+        }
+    }
+    static void Main(string[] args)
+    {
+        List<Product> products = new List<Product>();
+        List<Supplier> suppliers = new List<Supplier>();
+        List<StockMovement> stockMovements = new List<StockMovement>();
+        Console.Write("enter how many providers ");
+        int supplierCount = int.Parse(Console.ReadLine());
+        for (int i = 0; i < supplierCount; i++)
+        {
+            Console.Write("enter provider.s name");
+            string supplierName = Console.ReadLine();
+            suppliers.Add(new Supplier(i + 1, supplierName));
+        }
+        Console.Write("enter how many products");
+        int productCount = int.Parse(Console.ReadLine());
+        for (int i = 0; i < productCount; i++)
+        {
+            Console.Write("enter product.s name");
+            string productName = Console.ReadLine();
+            Console.Write("enter how mach money for 1 product");
+            decimal purchasePrice = decimal.Parse(Console.ReadLine());
+            Console.Write("enter how mach money to buy product");
+            decimal salePrice = decimal.Parse(Console.ReadLine());
+            products.Add(new Product(i + 1, productName, purchasePrice, salePrice));
+        }
+        while (true)
+        {
+            Console.Write("enter date of moving product (exit) ");
+            string inputDate = Console.ReadLine();
+            if (inputDate.ToLower() == "exit")
+                break;
+            DateTime date = DateTime.Parse(inputDate);
+            Console.Write("enter product ID");
+            int productId = int.Parse(Console.ReadLine());
+            Product product = products.FirstOrDefault(p => p.Id == productId);
+            if (product == null)
+            {
+                Console.WriteLine("no product");
+                continue;
+            }
+            Console.Write("enter how many products");
+            int quantity = int.Parse(Console.ReadLine());
+            Console.Write("enter provider ID");
+            int supplierId = int.Parse(Console.ReadLine());
+            Supplier supplier = null;
+            if (supplierId != 0)
+            {
+                supplier = suppliers.FirstOrDefault(s => s.Id == supplierId);
+                if (supplier == null)
+                {
+                    Console.WriteLine("no provider");
+                    continue;
+                }
+            }
+            bool isIncoming = supplier != null; 
+            stockMovements.Add(new StockMovement(date, product, supplier, quantity, isIncoming));
+        }
+        ShowIncomingProductsGroupedByDate(stockMovements);
+        ShowIncomingProductsGroupedBySupplier(stockMovements);
+        ShowAvailableProducts(products, stockMovements);
+        ShowOutgoingProductsGroupedByDate(stockMovements);
+        CalculateTotalOutgoingValue(stockMovements);
+        CalculateTotalProfit(stockMovements);
+        Console.WriteLine("push any buttom to exit");
+        Console.ReadKey();
+    }
+    private static void ShowIncomingProductsGroupedByDate(List<StockMovement> movements)
+    {
+        var incomingGroupedByDate = movements
+            .Where(m => m.IsIncoming)
+            .GroupBy(m => m.Date.Date)
+            .OrderBy(g => g.Key);
+        Console.WriteLine("\nproducts in groupe with date");
+        foreach (var group in incomingGroupedByDate)
+        {
+            Console.WriteLine($"date: {group.Key.ToShortDateString()}");
+            foreach (var movement in group)
+            {
+                Console.WriteLine($" - {movement.Product.Name}: {movement.Quantity} ones (provider: {movement.Supplier?.Name})");
+            }
+        }
+    }
+    private static void ShowIncomingProductsGroupedBySupplier(List<StockMovement> movements)
+    {
+        var incomingGroupedBySupplier = movements
+            .Where(m => m.IsIncoming)
+            .GroupBy(m => m.Supplier)
+            .OrderBy(g => g.Key?.Name);
+        Console.WriteLine("\nproducts in groupe with provider");
+        foreach (var group in incomingGroupedBySupplier)
+        {
+            Console.WriteLine($"provider: {group.Key?.Name}");
+            var sortedByDate = group.OrderBy(m => m.Date);
+            foreach (var movement in sortedByDate)
+            {
+                Console.WriteLine($" - {movement.Product.Name}: {movement.Quantity} ones (date: {movement.Date.ToShortDateString()})");
+            }
+        }
+    }
+    private static void ShowAvailableProducts(List<Product> products, List<StockMovement> movements)
+    {
+        var availableProducts = products
+            .Where(p => movements.Where(m => m.Product == p).Sum(m => m.IsIncoming ? m.Quantity : -m.Quantity) > 0);
+        Console.WriteLine("\nproducts on sklad");
+        foreach (var product in availableProducts)
+        {
+            int stockQuantity = movements.Where(m => m.Product == product).Sum(m => m.IsIncoming ? m.Quantity : -m.Quantity);
+            Console.WriteLine($" - {product.Name}: {stockQuantity} еones on sklade");
+        }
+    }
+    private static void ShowOutgoingProductsGroupedByDate(List<StockMovement> movements)
+    {
+        var outgoingGroupedByDate = movements
+            .Where(m => !m.IsIncoming)
+            .GroupBy(m => m.Date.Date)
+            .OrderBy(g => g.Key);
+        Console.WriteLine("\nproducts from sklad grouped with date");
+        foreach (var group in outgoingGroupedByDate)
+        {
+            Console.WriteLine($"date: {group.Key.ToShortDateString()}");
+            foreach (var movement in group)
+            {
+                Console.WriteLine($" - {movement.Product.Name}: {movement.Quantity} ones");
+            }
+        }
+    }
+    private static void CalculateTotalOutgoingValue(List<StockMovement> movements)
+    {
+        decimal totalOutgoingValue = movements
+            .Where(m => !m.IsIncoming)
+            .Sum(m => m.Quantity * m.Product.SalePrice);
+
+        Console.WriteLine($"\ntotal product sum {totalOutgoingValue}");
+    }
+    private static void CalculateTotalProfit(List<StockMovement> movements)
+    {
+        decimal totalProfit = movements
+            .Where(m => !m.IsIncoming)
+            .Sum(m => m.Quantity * (m.Product.SalePrice - m.Product.PurchasePrice));
+        Console.WriteLine($"total sum: {totalProfit}");
+    }
+}

@@ -1,0 +1,182 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+namespace LibraryManagementSystem
+{
+    public class Book
+    {
+        public string Author { get; set; }     
+        public string Title { get; set; }       
+        public int Year { get; set; }            
+        public string Publisher { get; set; }   
+        public List<CheckoutRecord> CheckoutHistory { get; set; } = new List<CheckoutRecord>();
+        public bool HasBeenCheckedOut()
+        {
+            return CheckoutHistory.Any();
+        }
+        public bool IsCurrentlyCheckedOut()
+        {
+            return CheckoutHistory.Any(r => r.ReturnDate == null);
+        }
+    }
+    public class CheckoutRecord
+    {
+        public string ReaderName { get; set; }  
+        public DateTime CheckoutDate { get; set; } 
+        public DateTime? ReturnDate { get; set; } 
+    }
+    class Program
+    {
+        static List<Book> library = new List<Book>();
+        static void Main(string[] args)
+        {
+            Console.WriteLine("book-system in library");
+            while (true)
+            {
+                Console.WriteLine("\nchoose action:");
+                Console.WriteLine("1. add new book");
+                Console.WriteLine("2. take book");
+                Console.WriteLine("3. give book");
+                Console.WriteLine("4. books never taken");
+                Console.WriteLine("5. people take books");
+                Console.WriteLine("6. out of program");
+                string choice = Console.ReadLine();
+                switch (choice)
+                {
+                    case "1":
+                        AddNewBook();
+                        break;
+                    case "2":
+                        CheckoutBook();
+                        break;
+                    case "3":
+                        ReturnBook();
+                        break;
+                    case "4":
+                        ShowNeverCheckedOutBooks();
+                        break;
+                    case "5":
+                        ShowCurrentlyCheckedOutBooks();
+                        break;
+                    case "6":
+                        return;
+                    default:
+                        Console.WriteLine("error! try again");
+                        break;
+                }
+            }
+        }
+        static void AddNewBook()
+        {
+            Console.WriteLine("\nadd new book:");
+            Book book = new Book();
+            Console.Write("FIO autor: ");
+            book.Author = Console.ReadLine();
+            Console.Write("book name: ");
+            book.Title = Console.ReadLine();
+            Console.Write("year: ");
+            book.Year = int.Parse(Console.ReadLine());
+            Console.Write("prodaction: ");
+            book.Publisher = Console.ReadLine();
+            library.Add(book);
+            Console.WriteLine("book is add!");
+        }
+        static void CheckoutBook()
+        {
+            if (library.Count == 0)
+            {
+                Console.WriteLine("no book in library");
+                return;
+            }
+            Console.WriteLine("\nperson take book:");
+            Console.WriteLine("person can take:");
+            for (int i = 0; i < library.Count; i++)
+            {
+                Console.WriteLine($"{i + 1}. {library[i].Title} ({library[i].Author})");
+            }
+            Console.Write("choose book number to take: ");
+            int bookIndex = int.Parse(Console.ReadLine()) - 1;
+            if (bookIndex < 0 || bookIndex >= library.Count)
+            {
+                Console.WriteLine("error book number");
+                return;
+            }
+            if (library[bookIndex].IsCurrentlyCheckedOut())
+            {
+                Console.WriteLine("book is alrady taken");
+                return;
+            }
+            Console.Write("FIO reader: ");
+            string readerName = Console.ReadLine();
+            var record = new CheckoutRecord
+            {
+                ReaderName = readerName,
+                CheckoutDate = DateTime.Now,
+                ReturnDate = null
+            };
+            library[bookIndex].CheckoutHistory.Add(record);
+            Console.WriteLine("book is taken to reader");
+        }
+        static void ReturnBook()
+        {
+            if (library.Count == 0)
+            {
+                Console.WriteLine("no book in library");
+                return;
+            }
+            Console.WriteLine("\ngiving book back");
+            var checkedOutBooks = library.Where(b => b.IsCurrentlyCheckedOut()).ToList();
+            if (checkedOutBooks.Count == 0)
+            {
+                Console.WriteLine("no books with people");
+                return;
+            }
+            Console.WriteLine("books are giving:");
+            for (int i = 0; i < checkedOutBooks.Count; i++)
+            {
+                var lastRecord = checkedOutBooks[i].CheckoutHistory.Last();
+                Console.WriteLine($"{i + 1}. {checkedOutBooks[i].Title} ({checkedOutBooks[i].Author}) - with {lastRecord.ReaderName}");
+            }
+            Console.Write("choose book number to give it back: ");
+            int bookIndex = int.Parse(Console.ReadLine()) - 1;
+            if (bookIndex < 0 || bookIndex >= checkedOutBooks.Count)
+            {
+                Console.WriteLine("error book number");
+                return;
+            }
+            var book = checkedOutBooks[bookIndex];
+            var record = book.CheckoutHistory.Last();
+            record.ReturnDate = DateTime.Now;
+            Console.WriteLine("book is gived back");
+        }
+        static void ShowNeverCheckedOutBooks()
+        {
+            var neverCheckedOut = library.Where(b => !b.HasBeenCheckedOut()).ToList();
+            Console.WriteLine("\nbooks never gived:");
+            if (neverCheckedOut.Count == 0)
+            {
+                Console.WriteLine("no books");
+                return;
+            }
+            foreach (var book in neverCheckedOut)
+            {
+                Console.WriteLine($"{book.Title} ({book.Author}), {book.Year}, {book.Publisher}");
+            }
+        }
+        static void ShowCurrentlyCheckedOutBooks()
+        {
+            var checkedOutBooks = library.Where(b => b.IsCurrentlyCheckedOut()).ToList();
+            Console.WriteLine("\nbooks mow with readers:");
+            if (checkedOutBooks.Count == 0)
+            {
+                Console.WriteLine("no books");
+                return;
+            }
+            foreach (var book in checkedOutBooks)
+            {
+                var lastRecord = book.CheckoutHistory.Last();
+                Console.WriteLine($"{book.Title} ({book.Author}) - у {lastRecord.ReaderName}, taken {lastRecord.CheckoutDate.ToShortDateString()}");
+            }
+        }
+    }
+}
